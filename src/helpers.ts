@@ -133,6 +133,9 @@ export function getSenderReportingData(
         nowPlayingItem.MediaType = item.MediaType;
         nowPlayingItem.Type = item.Type;
         nowPlayingItem.Name = item.Name;
+        // Needed by the sender to render a time-of-day progress bar for live TV,
+        // since the channel item itself has no RunTimeTicks.
+        nowPlayingItem.CurrentProgram = item.CurrentProgram;
 
         nowPlayingItem.IndexNumber = item.IndexNumber;
         nowPlayingItem.IndexNumberEnd = item.IndexNumberEnd;

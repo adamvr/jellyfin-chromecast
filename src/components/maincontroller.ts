@@ -3,7 +3,11 @@ import type {
     MediaStream,
     MediaSourceInfo
 } from '@jellyfin/sdk/lib/generated-client';
-import { getSessionApi, getUserLibraryApi } from '@jellyfin/sdk/lib/utils/api';
+import {
+    getLiveTvApi,
+    getSessionApi,
+    getUserLibraryApi
+} from '@jellyfin/sdk/lib/utils/api';
 import {
     getCurrentPositionTicks,
     getReportingParams,
@@ -631,7 +635,22 @@ export async function onStopPlayerBeforePlaybackDone(
             itemId: item.Id
         });
 
-        PlaybackManager.playItemInternal(response.data, options);
+        const fullItem = response.data;
+
+        // getItem() does not include CurrentProgram for TvChannel items.
+        // Without it, the sender (web/Android) can't render a live-TV progress
+        // scrubber, since that relies on the current program's StartDate/EndDate.
+        if (fullItem.Type === 'TvChannel' && fullItem.Id) {
+            const channelResponse = await getLiveTvApi(
+                JellyfinApi.jellyfinApi
+            ).getChannel({
+                channelId: fullItem.Id
+            });
+
+            fullItem.CurrentProgram = channelResponse.data.CurrentProgram;
+        }
+
+        PlaybackManager.playItemInternal(fullItem, options);
     }
 }
 
